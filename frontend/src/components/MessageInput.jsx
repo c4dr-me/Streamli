@@ -1,13 +1,16 @@
 // client/src/components/MessageInput.jsx
 import React from 'react';
 
-function MessageInput({ newMessage, setNewMessage, handleSendMessage }) {
+function MessageInput({ newMessage, setNewMessage, handleSendMessage, handleTyping }) {
   return (
     <div className="flex space-x-2 mb-6">
       <input
         type="text"
         value={newMessage}
-        onChange={(e) => setNewMessage(e.target.value)}
+        onChange={(e) => {
+          setNewMessage(e.target.value);
+          handleTyping();
+        }}
         placeholder="Type a message..."
         className="flex-1 px-4 py-2 bg-gray-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
       />

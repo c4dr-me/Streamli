@@ -41,6 +41,7 @@ io.on('connection', (socket) => {
   socket.on('join_room', async ({ roomId, username }) => {
     try {
       console.log(`${username} joined room ${roomId}`);
+
       
       // Find or create the room in the database
       let room = await Room.findOne({ roomId });
@@ -69,6 +70,10 @@ io.on('connection', (socket) => {
     } catch (error) {
       console.error('Error joining room:', error);
     }
+  });
+
+  socket.on('typing', (data) => {
+    socket.to(data.roomId).emit('user_typing', data.username);
   });
 
   // Handle status updates
