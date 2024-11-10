@@ -12,7 +12,7 @@ function YouTubeSearch({ youtubeSearch, setYoutubeSearch, onVideoSelect }) {
           part: 'snippet',
           q: query,
           type: 'video',
-          maxResults: 20,  
+          maxResults: 20,
           key: import.meta.env.VITE_YOUTUBE_API_KEY,
         },
       });
@@ -24,18 +24,18 @@ function YouTubeSearch({ youtubeSearch, setYoutubeSearch, onVideoSelect }) {
 
   const handleVideoSelect = (videoId) => {
     onVideoSelect(videoId);
-    setSuggestions([]); 
-    setIsTyping(false); 
+    setSuggestions([]);
+    setIsTyping(false);
   };
 
   const handleInputChange = (e) => {
     const value = e.target.value;
     setYoutubeSearch(value);
-    setIsTyping(value.trim() !== ''); 
+    setIsTyping(value.trim() !== '');
     if (value.trim()) {
-      handleSearch(value); 
+      handleSearch(value);
     } else {
-      setSuggestions([]); 
+      setSuggestions([]);
     }
   };
 
@@ -47,18 +47,18 @@ function YouTubeSearch({ youtubeSearch, setYoutubeSearch, onVideoSelect }) {
           value={youtubeSearch}
           onChange={handleInputChange}
           placeholder="Search YouTube videos"
-          className="w-full px-4 py-2 rounded-md bg-gray-800 text-white placeholder-gray-400 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="w-full px-4 py-2 rounded-md bg-gray-800 text-white placeholder-gray-400 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-300"
         />
       </div>
 
       {/* Display suggestions as a scrollable list */}
       {isTyping && suggestions.length > 0 && (
-        <div className="bg-gray-800 rounded-md mt-2 max-h-60 overflow-y-auto custom-scrollbar border border-gray-600">
+        <div className="bg-gray-800 rounded-md mt-2 max-h-60 overflow-y-auto custom-scrollbar border border-gray-600 animate-fadeIn">
           {suggestions.map((video) => (
             <div
               key={video.id.videoId}
               onClick={() => handleVideoSelect(video.id.videoId)}
-              className="p-2 cursor-pointer hover:bg-gray-700 flex items-center space-x-2"
+              className="p-2 cursor-pointer hover:bg-gray-700 flex items-center space-x-2 transition duration-300"
             >
               <img src={video.snippet.thumbnails.default.url} alt={video.snippet.title} className="w-16 h-9 rounded-md" />
               <p className="text-sm text-white">{video.snippet.title}</p>

@@ -7,6 +7,35 @@ body {
     background-color: rgba(18, 21, 25, 1);
 }
 
+/* Animation for suggestions list */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fadeIn {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.custom-scrollbar {
+    overflow-x: hidden;
+    /* Disable horizontal scrolling */
+    overflow-wrap: break-word;
+    /* Break long words */
+    max-width: 100%;
+    /* Ensure width doesn't exceed the container */
+    word-break: break-word;
+    /* Break long URLs or words */
+}
+
+
 *::-webkit-scrollbar {
     width: 1rem;
 }

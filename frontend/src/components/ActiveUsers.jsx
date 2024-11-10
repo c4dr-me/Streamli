@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import useIdle from '../utils/useIdle';
 import io from 'socket.io-client';
+import { FaCircle } from 'react-icons/fa';
 
 const socket = io('http://localhost:5000');
 
@@ -54,22 +55,21 @@ function ActiveUsers({ users = [], currentUsername }) {
 
   return (
     <div className="text-lg mt-6 custom-scrollbar">
-      <ul className="space-y-1">
+      <ul className="space-y-2">
         {users.map((user, index) =>
           user && user.username ? (
-            <li key={index} className="flex items-center justify-between px-2 py-2 bg-gray-700 rounded-lg">
-              <div className="flex items-center space-x-1">
-                <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white">
+            <li key={index} className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-gray-700 to-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">
                   {user.username[0].toUpperCase()}
                 </div>
-                <span className="font-semibold text-white pl-4">{user.username}</span>
+                <span className="font-semibold text-white">{user.username}</span>
               </div>
-              <span
-                className={`ml-2 text-sm flex items-center pr-4 ${
-                  userStatuses[user.username] === 'idle' ? 'text-yellow-500' : 'text-green-500'
-                }`}
-              >
-                {userStatuses[user.username] === 'idle' ? <span className="w-2 h-2 bg-yellow-500 rounded-full inline-block"></span> : <span className="w-2 h-2 bg-green-500 rounded-full inline-block"></span>}
+              <span className="flex items-center space-x-2">
+                <FaCircle className={`text-sm ${userStatuses[user.username] === 'idle' ? 'text-yellow-500' : 'text-green-500'}`} />
+                <span className={`text-sm ${userStatuses[user.username] === 'idle' ? 'text-yellow-500' : 'text-green-500'}`}>
+                  {userStatuses[user.username] === 'idle' ? 'Idle' : 'Active'}
+                </span>
               </span>
             </li>
           ) : null

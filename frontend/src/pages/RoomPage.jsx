@@ -69,9 +69,9 @@ function RoomPage() {
       const newPlayer = new window.YT.Player("youtube-player", {
         videoId: selectedVideo,
         playerVars: {
-          controls: 1,         // Minimal controls without progress bar
-          modestbranding: 1,   // Reduces YouTube branding
-          fs: 1,               // Allows fullscreen button
+          controls: 1,
+          modestbranding: 1,
+          fs: 1,
         },
         events: {
           onReady: onPlayerReady,
@@ -104,8 +104,6 @@ function RoomPage() {
       setIsPlaying(false);
     }
   };
-
-  
 
   const updateProgress = () => {
     if (player) {
@@ -140,13 +138,12 @@ function RoomPage() {
 
   const handleSeek = (event) => {
     if (player && progressBarRef.current) {
-      
       const progressBarWidth = progressBarRef.current.offsetWidth;
       const clickPosition = event.nativeEvent.offsetX;
       const clickProgress = (clickPosition / progressBarWidth) * 100;
       const newTime = (clickProgress / 100) * player.getDuration();
       player.seekTo(newTime);
-      setProgress(clickProgress); // Update the progress state to reflect the new seek time
+      setProgress(clickProgress);
     }
   };
 
@@ -165,14 +162,17 @@ function RoomPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-900 text-white px-4">
+    <div className="min-h-screen flex flex-col bg-gray-900 text-white pt-1">
       <header className="mb-2">
-        <h1 className="text-3xl font-bold py-4 text-center">
-          Welcome, {username} to Room: {roomId}
+        <h1 className="text-2xl font-bold text-center">
+          Welcome, {username}!
         </h1>
+        <h2 className="text-1xl text-center text-gray-400">
+          Room #{roomId}
+        </h2>
       </header>
       <div className="flex flex-col md:flex-row w-full max-w-screen-xl mx-auto space-y-4 md:space-y-0 md:space-x-8">
-        {/* Left Section: Video Player  */}
+        {/* Left Section: Video Player */}
         <div className="w-full md:w-7/8 bg-gray-800 rounded-lg p-4 flex flex-col space-y-6">
           <YouTubeSearch
             youtubeSearch={youtubeSearch}
@@ -185,40 +185,31 @@ function RoomPage() {
               className="w-full h-[400px] md:h-[490px] rounded-lg"
             ></div>
 
-            
             <div className="flex items-center justify-between mt-2 px-2 pb-2">
-              {/* Play/Pause Button */}
               <button
                 onClick={handlePlayPause}
                 onKeyDown={(event) => {
                   if (event.key === "Enter" || event.key === "") {
                     handlePlayPause();
-                    event.preventDefault(); 
+                    event.preventDefault();
                   }
                 }}
                 tabIndex="1"
                 className="flex m-auto items-center pl-4 justify-center p-0 bg-transparent border-none hover:bg-transparent transition duration-300"
-                aria-label={isPlaying ? "Pause video" : "Play video"} 
+                aria-label={isPlaying ? "Pause video" : "Play video"}
               >
                 {isPlaying ? (
-                  <FaPause
-                    size={26}
-                    className="text-blue-600 hover:text-blue-700"
-                  />
+                  <FaPause size={26} className="text-blue-600 hover:text-blue-700" />
                 ) : (
-                  <FaPlay
-                    size={26}
-                    className="text-blue-600 hover:text-blue-700"
-                  />
+                  <FaPlay size={26} className="text-blue-600 hover:text-blue-700" />
                 )}
               </button>
 
-              {/* Progress Bar */}
               <div className="flex-1 mx-4">
                 <div
                   ref={progressBarRef}
                   className="progressbar-container"
-                  onClick={handleSeek} 
+                  onClick={handleSeek}
                 >
                   <div
                     className="progressbar-complete"
@@ -232,7 +223,8 @@ function RoomPage() {
             </div>
           </div>
         </div>
-        {/* Right Section: Active Users & Chat (40% width) */}
+
+        {/* Right Section: Active Users & Chat */}
         <div className="w-full md:w-2/5 flex flex-col space-y-8">
           {/* Active Users Section */}
           <div className="h-40 bg-gray-800 rounded-lg p-4 overflow-y-auto shadow-lg">
@@ -242,7 +234,7 @@ function RoomPage() {
 
           {/* Chat Area */}
           <div className="flex-1 bg-gray-800 rounded-lg p-4 flex flex-col shadow-lg">
-            <div className="flex-1 overflow-y-auto mb-4 space-y-4">
+            <div className="flex-1 overflow-y-auto mb-4 space-y-4 max-w-full">
               <ChatMessages chatMessages={chatMessages} />
             </div>
             <MessageInput
