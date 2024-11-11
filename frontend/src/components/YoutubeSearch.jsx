@@ -23,9 +23,9 @@ function YouTubeSearch({ youtubeSearch, setYoutubeSearch, onVideoSelect }) {
   };
 
   const handleVideoSelect = (videoId) => {
-    onVideoSelect(videoId);
-    setSuggestions([]);
-    setIsTyping(false);
+    onVideoSelect(videoId); // This will emit the sync event if the leader has sync enabled
+    setSuggestions([]); // Clear suggestions
+    setIsTyping(false); // Reset typing state
   };
 
   const handleInputChange = (e) => {

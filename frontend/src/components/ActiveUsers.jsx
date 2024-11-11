@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import useIdle from '../utils/useIdle';
 import io from 'socket.io-client';
-import { FaCircle } from 'react-icons/fa';
+import { FaCircle, FaCrown } from 'react-icons/fa';
 
 const socket = io('http://localhost:5000');
 
-function ActiveUsers({ users = [], currentUsername }) {
+function ActiveUsers({ users = [], currentUsername, leader }) {
   const [userStatuses, setUserStatuses] = useState({});
   const isIdle = useIdle(30000);
 
@@ -64,6 +64,7 @@ function ActiveUsers({ users = [], currentUsername }) {
                   {user.username[0].toUpperCase()}
                 </div>
                 <span className="font-semibold text-white">{user.username}</span>
+                {user.username === leader && <FaCrown className="text-yellow-500 ml-2" />}
               </div>
               <span className="flex items-center space-x-2">
                 <FaCircle className={`text-sm ${userStatuses[user.username] === 'idle' ? 'text-yellow-500' : 'text-green-500'}`} />

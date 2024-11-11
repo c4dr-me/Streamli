@@ -33,6 +33,7 @@ const io = socketIo(server, {
 });
 
 const usersInRooms = {};
+const roomLeaders = {};
 
 io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);
@@ -42,7 +43,6 @@ io.on('connection', (socket) => {
     try {
       console.log(`${username} joined room ${roomId}`);
 
-      
       // Find or create the room in the database
       let room = await Room.findOne({ roomId });
       if (!room) {
@@ -64,8 +64,14 @@ io.on('connection', (socket) => {
         await room.save();
       }
 
+      // Set the leader if not already set
+      if (!roomLeaders[roomId]) {
+        roomLeaders[roomId] = username;
+      }
+
       socket.join(roomId);
       io.to(roomId).emit('update_users', usersInRooms[roomId]);
+      io.to(roomId).emit('leader_changed', roomLeaders[roomId]);
 
     } catch (error) {
       console.error('Error joining room:', error);
@@ -117,6 +123,18 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Handle video sync actions
+  socket.on('sync_video', ({ roomId, action, time }) => {
+    socket.to(roomId).emit('sync_video', { action, time });
+    console.log(`Syncing video for room ${roomId}: ${action} at ${time}`);
+  });
+
+  socket.on("video_changed", ({ roomId, VideoId }) => {
+    // Broadcast the video change to all clients in the room
+    io.to(roomId).emit("sync_video_change", { VideoId });
+  });
+  
+
   // Handle user disconnect
   socket.on('disconnect', async () => {
     console.log('A user disconnected:', socket.id);
@@ -124,8 +142,18 @@ io.on('connection', (socket) => {
     for (const roomId in usersInRooms) {
       const userIndex = usersInRooms[roomId].findIndex(user => user.id === socket.id);
       if (userIndex !== -1) {
-        usersInRooms[roomId].splice(userIndex, 1);
+        const [disconnectedUser] = usersInRooms[roomId].splice(userIndex, 1);
         io.to(roomId).emit('update_users', usersInRooms[roomId]);
+
+        // Handle leader change if the leader disconnects
+        if (disconnectedUser.username === roomLeaders[roomId]) {
+          if (usersInRooms[roomId].length > 0) {
+            roomLeaders[roomId] = usersInRooms[roomId][0].username;
+          } else {
+            delete roomLeaders[roomId];
+          }
+          io.to(roomId).emit('leader_changed', roomLeaders[roomId]);
+        }
 
         if (usersInRooms[roomId].length === 0) {
           console.log(`Room ${roomId} is empty. Deleting room and messages.`);
