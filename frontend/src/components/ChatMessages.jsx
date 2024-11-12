@@ -25,7 +25,7 @@ function ChatMessages({ chatMessages, setReplyTo }) {
                 <strong className="text-white">{msg.username}</strong>
                 <span className="text-sm text-gray-400">{msg.time}</span>
               </div>
-              <div className="bg-gray-700 rounded-lg p-2 mt-1 relative">
+              <div className={`bg-gray-700 rounded-lg p-2 mt-1 relative ${msg.replyTo ? 'border-l-4 border-blue-500' : ''}`}>
                 <p className="break-words max-w-full text-white">{msg.message}</p>
                 <button
                   onClick={() => setReplyTo(msg)}

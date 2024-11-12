@@ -1,27 +1,55 @@
-// client/src/components/MessageInput.jsx
-import React from 'react';
+import React, { useState } from 'react';
+import EmojiPicker from 'emoji-picker-react';
 
-function MessageInput({ newMessage, setNewMessage, handleSendMessage, handleTyping }) {
+const MessageInput = ({ newMessage, setNewMessage, handleSendMessage, handleTyping }) => {
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
+  const onEmojiClick = (emojiObject) => {
+    const emoji = emojiObject.emoji || emojiObject.native || ''; 
+    setNewMessage((prevMessage) => {
+      const updatedMessage = (prevMessage || "") + emoji;
+      return updatedMessage;
+    });
+    
+    setShowEmojiPicker(false); 
+  };
+
   return (
-    <div className="flex space-x-2 mb-6">
+    <div className="flex items-center space-x-2 relative">
+      <button
+        onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+        className="bg-gray-700 text-white p-2 rounded-lg"
+      >
+        😊
+      </button>
+      {showEmojiPicker && (
+        <div className="absolute bottom-16 z-10">
+          <EmojiPicker onEmojiClick={onEmojiClick} theme="dark" />
+        </div>
+      )}
       <input
         type="text"
-        value={newMessage}
+        value={newMessage || ''}  
         onChange={(e) => {
           setNewMessage(e.target.value);
-          handleTyping();
         }}
-        placeholder="Type a message..."
-        className="flex-1 px-4 py-2 bg-gray-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        onKeyPress={(e) => {
+          if (e.key === 'Enter') {
+            handleSendMessage();
+          }
+        }}
+        onKeyUp={handleTyping}
+        placeholder="Type a message"
+        className="flex-1 bg-gray-700 text-white p-2 rounded-lg"
       />
       <button
         onClick={handleSendMessage}
-        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="bg-blue-600 text-white p-2 rounded-lg"
       >
         Send
       </button>
     </div>
   );
-}
+};
 
 export default MessageInput;
