@@ -1,8 +1,8 @@
 import React from "react";
 import { FaCopy, FaEnvelope, FaWhatsapp, FaChartBar } from "react-icons/fa";
 
-const Header = ({ username, roomId, copyRoomUrl, shareViaGmail, shareViaWhatsApp, showAnalytics }) => (
-  <header className="mb-2 p-4">
+const Header = ({ username, roomId, copyRoomUrl, shareViaGmail, shareViaWhatsApp}) => (
+  <header className="mb-6 p-6">
     <div className="flex justify-between items-center">
       {/* Left section: Username */}
             <h1 className="text-2xl pl-2 font-bold text-left text-gray-400">Welcome, <span className="text-gray-100 font-3xl font-extrabold">{username}</span>!</h1>
@@ -33,13 +33,13 @@ const Header = ({ username, roomId, copyRoomUrl, shareViaGmail, shareViaWhatsApp
         >
           <FaWhatsapp size={12} />
         </button>
-        <button
+        {/* <button
         onClick={showAnalytics}
         title="Show Analytics"
         className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded flex items-center"
       >
         <FaChartBar size={12} />
-      </button>
+      </button> */}
       </div>
     </div>
   </header>

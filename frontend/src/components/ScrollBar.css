@@ -94,6 +94,24 @@ body {
     }
 }
 
+.progressbar-container:hover {
+    border: 1px solid #7854cb;
+}
+
+@keyframes shine {
+    0% {
+        transform: translateX(-80%);
+    }
+
+    100% {
+        transform: translateX(-70%);
+    }
+}
+
+.animate-shine {
+    animation: shine 1.5s infinite ease-in-out;
+}
+
 @keyframes g {
     0% {
         background-color: #5225bd;

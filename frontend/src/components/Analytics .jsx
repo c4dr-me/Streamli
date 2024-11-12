@@ -100,8 +100,9 @@ const Analytics = ({ chatMessages = [], usersInRoom = [], userActivity = [] }) =
 
   // Function to process user messages data with time scales
   const processUserMessages = (messages) => {
-    const userMessageCounts = messages.reduce((acc, msg) => {
-      const timestamp = new Date(`1970-01-01T${msg.time}Z`).getTime();
+    const userMessages = messages.filter(msg => msg.username !== 'System');
+    const userMessageCounts = userMessages.reduce((acc, msg) => {
+      const timestamp = new Date(`${msg.time}`).getTime();
       if (!acc[msg.username]) acc[msg.username] = [];
       acc[msg.username].push({ x: timestamp, y: 1 });
       return acc;

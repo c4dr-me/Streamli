@@ -11,6 +11,7 @@ import {
   FaPlay,
   FaPause,
   FaSync,
+  FaChartBar,
 } from "react-icons/fa";
 import Analytics from "../components/Analytics ";
 import {throttle} from 'lodash';
@@ -128,10 +129,16 @@ function RoomPage() {
 
     // Listen for user join and leave events
     newSocket.on("user_joined", ({ username, time }) => {
-      setChatMessages((prevMessages) => [
-        ...prevMessages,
-        { username: "System", message: `${username} joined the room`, time },
-      ]);
+      setChatMessages((prevMessages) => {
+        // Check if the join message already exists
+        const joinMessageExists = prevMessages.some(
+          (msg) => msg.username === "System" && msg.message === `${username} joined the room`
+        );
+        if (!joinMessageExists) {
+          return [...prevMessages, { username: "System", message: `${username} joined the room`, time }];
+        }
+        return prevMessages;
+      });
     });
 
     newSocket.on("user_left", ({ username, time }) => {
@@ -324,14 +331,14 @@ function RoomPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-900 text-white pt-1">
+    <div className="min-h-screen flex flex-col bg-gray-900 text-white pt-1 pb-8">
       <Header
         username={username}
         roomId={roomId}
         copyRoomUrl={copyRoomUrl}
         shareViaGmail={shareViaGmail}
         shareViaWhatsApp={shareViaWhatsApp}
-        showAnalytics={handleShowAnalytics}
+        // showAnalytics={handleShowAnalytics}
       /> 
        <Modal isOpen={showAnalytics} onClose={handleShowAnalytics}>
         <Analytics chatMessages={chatMessages} usersInRoom={usersInRoom} userActivity={userActivity} />
@@ -345,7 +352,7 @@ function RoomPage() {
               setYoutubeSearch={setYoutubeSearch}
               onVideoSelect={handleVideoSelect}
             />
-            <div className="bg-gray-700 rounded-lg mt-2 flex-1">
+            <div className="bg-gray-700 rounded-lg mt-2 flex-1 flex flex-col space-y-4 min-h-[30vh]">
               <div
                 id="youtube-player"
                 className="w-full h-[400px] md:h-[490px] rounded-lg"
@@ -415,7 +422,7 @@ function RoomPage() {
           {/* Right Section: Active Users & Chat */}
           <div className="w-full md:w-2/5 flex flex-col space-y-8">
             {/* Chat Area */}
-            <div className="flex-1 bg-gray-800 rounded-lg p-4 flex flex-col shadow-lg min-h-[70vh]">
+            <div className="flex-1 bg-gray-800 rounded-lg p-4 flex flex-col shadow-lg ">
               <div className="flex-1 overflow-y-auto mb-4 space-y-4 max-w-full ">
                 <ChatMessages
                   chatMessages={chatMessages}
@@ -454,7 +461,16 @@ function RoomPage() {
             </div>
           </div>
             
-        </div>
+      </div>
+           <button
+        onClick={handleShowAnalytics}
+        className="fixed bottom-8 right-8 p-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full shadow-lg hover:from-blue-600 hover:to-purple-700 transition duration-300"
+        title="Show Analytics"
+      >
+        <div className="absolute top-0 left-10 w-full h-full bg-gradient-to-r from-transparent via-gray-300 to-transparent rounded-full animate-shine"></div>
+        <FaChartBar size={24} />
+        
+      </button>
       
     </div>
   );

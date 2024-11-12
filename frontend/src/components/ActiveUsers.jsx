@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import useIdle from '../utils/useIdle';
 import io from 'socket.io-client';
 import { FaCircle, FaCrown } from 'react-icons/fa';
+import { getColorForUsername } from '../utils/colorUtils'; // Import the utility function
 
 const socket = io('http://localhost:5000');
 
@@ -60,7 +61,7 @@ function ActiveUsers({ users = [], currentUsername, leader }) {
           user && user.username ? (
             <li key={index} className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-gray-700 to-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
               <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold ${getColorForUsername(user.username)}`}>
                   {user.username[0].toUpperCase()}
                 </div>
                 <span className="font-semibold text-white">{user.username}</span>
