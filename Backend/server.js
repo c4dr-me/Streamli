@@ -35,7 +35,7 @@ const io = socketIo(server, {
 
 const usersInRooms = {};
 const roomLeaders = {};
-const disconnectTimers = {}; // To track disconnect timers
+const disconnectTimers = {}; 
 
 io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);

@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Bar, Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, LineElement, PointElement, Title, Tooltip, Legend, TimeScale } from 'chart.js';
 import 'chartjs-adapter-date-fns';
-import { enIN } from 'date-fns/locale';
+import MessagesPerHourChart from './MessagesPerHourChart';
+import UserActivityChart from './UserActivityChart';
+import UserMessagesOverTimeChart from './UserMessagesOverTimeChart';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, Title, Tooltip, Legend, TimeScale);
 
@@ -101,21 +102,29 @@ const Analytics = ({ chatMessages = [], usersInRoom = [], userActivity = [] }) =
   // Function to process user messages data with time scales
   const processUserMessages = (messages) => {
     const userMessages = messages.filter(msg => msg.username !== 'System');
+    console.log("Filtered user messages:", userMessages);
     const userMessageCounts = userMessages.reduce((acc, msg) => {
-      const timestamp = new Date(`${msg.time}`).getTime();
+      console.log("Raw timestamp:", msg.time);
+      
+      const timestamp = new Date(`2024-11-11T${msg.time}+05:30`).toISOString();
+
+      console.log("Parsed timestamp:", timestamp);
       if (!acc[msg.username]) acc[msg.username] = [];
       acc[msg.username].push({ x: timestamp, y: 1 });
       return acc;
     }, {});
+    console.log("User message counts:", userMessageCounts);
 
     const cumulativeUserMessageCounts = Object.keys(userMessageCounts).reduce((acc, username) => {
       let cumulativeCount = 0;
       acc[username] = userMessageCounts[username].map(point => {
         cumulativeCount += point.y;
+        console.log(cumulativeCount, username);
         return { x: point.x, y: cumulativeCount };
       });
       return acc;
     }, {});
+    console.log("Cumulative user message counts:", cumulativeUserMessageCounts);
 
     const colors = [
       'rgba(255, 99, 132, 0.6)',
@@ -140,7 +149,7 @@ const Analytics = ({ chatMessages = [], usersInRoom = [], userActivity = [] }) =
     const chartData = {
       datasets,
     };
-
+    console.log("User message per hour", chartData);
     setUserMessageData(chartData);
   };
 
@@ -174,170 +183,13 @@ const Analytics = ({ chatMessages = [], usersInRoom = [], userActivity = [] }) =
       </header>
       <div className="flex flex-col w-full max-w-screen-xl mx-auto space-y-4">
         {/* Messages per Hour Chart */}
-        {messageData && (
-          <div className="bg-gray-800 rounded-lg p-4">
-            <h2 className="text-xl font-semibold mb-4">Messages per Hour</h2>
-            <Line 
-              data={messageData} 
-              options={{
-                responsive: true,
-                animation: {
-                  duration: 1500,
-                  easing: 'easeInOutQuad',
-                },
-                scales: {
-                  x: {
-                    grid: {
-                      display: false,
-                    },
-                  },
-                  y: {
-                    grid: {
-                      display: true,
-                    },
-                    beginAtZero: true,
-                  },
-                },
-                plugins: {
-                  legend: {
-                    display: true,
-                    position: 'top',
-                    labels: {
-                      color: 'white',
-                    },
-                  },
-                  title: {
-                    display: true,
-                    text: 'Messages per Hour',
-                    color: 'white',
-                    font: {
-                      size: 18,
-                    },
-                  },
-                },
-              }} 
-            />
-          </div>
-        )}
+        {messageData && <MessagesPerHourChart data={messageData} />}
 
         {/* User Join/Leave per Hour Chart */}
-        {userActivityData && (
-          <div className="bg-gray-800 rounded-lg p-4">
-            <h2 className="text-xl font-semibold mb-4">User Join/Leave Activity per Hour</h2>
-            <Bar 
-              data={userActivityData} 
-              options={{
-                responsive: true,
-                animation: {
-                  duration: 1500,
-                  easing: 'easeInOutQuad',
-                },
-                scales: {
-                  x: {
-                    stacked: true,
-                    grid: {
-                      display: false,
-                    },
-                  },
-                  y: {
-                    stacked: true,
-                    grid: {
-                      display: true,
-                    },
-                    beginAtZero: true,
-                  },
-                },
-                plugins: {
-                  legend: {
-                    display: true,
-                    position: 'top',
-                    labels: {
-                      color: 'white',
-                    },
-                  },
-                  title: {
-                    display: true,
-                    text: 'User Join/Leave Activity per Hour',
-                    color: 'white',
-                    font: {
-                      size: 18,
-                    },
-                  },
-                },
-              }} 
-            />
-          </div>
-        )}
+        {userActivityData && <UserActivityChart data={userActivityData} />}
 
         {/* Messages Sent by User Over Time Chart */}
-        {userMessageData && (
-          <div className="bg-gray-800 rounded-lg p-4">
-            <h2 className="text-xl font-semibold mb-4">Messages Sent by User Over Time</h2>
-            <Line 
-              data={userMessageData} 
-              options={{
-                responsive: true,
-                animation: {
-                  duration: 1500,
-                  easing: 'easeInOutQuad',
-                },
-                scales: {
-                  x: {
-                    type: 'time',
-                    time: {
-                      unit: 'hour',
-                      tooltipFormat: 'PPpp',
-                      displayFormats: {
-                        hour: 'MMM d, h:mm a',
-                      },
-                    },
-                    adapters: {
-                      date: {
-                        locale: enIN,
-                      },
-                    },
-                    grid: {
-                      display: true,
-                    },
-                    title: {
-                      display: true,
-                      text: 'Time (IST)',
-                      color: 'white',
-                    },
-                  },
-                  y: {
-                    grid: {
-                      display: true,
-                    },
-                    beginAtZero: true,
-                    title: {
-                      display: true,
-                      text: 'Messages',
-                      color: 'white',
-                    },
-                  },
-                },
-                plugins: {
-                  legend: {
-                    display: true,
-                    position: 'top',
-                    labels: {
-                      color: 'white',
-                    },
-                  },
-                  title: {
-                    display: true,
-                    text: 'Messages Sent by User Over Time',
-                    color: 'white',
-                    font: {
-                      size: 18,
-                    },
-                  },
-                },
-              }} 
-            />
-          </div>
-        )}
+        {userMessageData && <UserMessagesOverTimeChart data={userMessageData} />}
       </div>
     </div>
   );
