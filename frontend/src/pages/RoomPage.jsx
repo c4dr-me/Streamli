@@ -39,7 +39,42 @@ function RoomPage() {
   const progressBarRef = useRef(null);
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [userActivity, setUserActivity] = useState([]); // State to track user activity (join/leave)
+  const [isPlayerReady, setIsPlayerReady] = useState(false);
 
+  useEffect(() => {
+    if (window.YT && selectedVideo) {
+      let newPlayer;
+  
+      try {
+        newPlayer = new window.YT.Player("youtube-player", {
+          videoId: selectedVideo,
+          playerVars: {
+            controls: 1,
+            modestbranding: 1,
+            fs: 1,
+            enablejsapi: 1,
+            origin: window.location.origin,
+          },
+          events: {
+            onReady: onPlayerReady,
+            onStateChange: onPlayerStateChange,
+          },
+        });
+  
+        setPlayer(newPlayer);
+      } catch (error) {
+        console.error("Error creating YouTube player", error);
+      }
+  
+      return () => {
+        if (newPlayer) {
+          console.log("Destroying player instance");
+          newPlayer.destroy();
+          setPlayer(null);
+        }
+      };
+    }
+  }, [selectedVideo]);
   
   useEffect(() => {
     if (!username) {
@@ -72,7 +107,11 @@ function RoomPage() {
     fetchUserEvents();
     fetchMessages();
 
-    const newSocket = io("http://localhost:5000");
+    const newSocket = io("http://localhost:5000", {
+      reconnection: true, 
+      reconnectionAttempts: 5, 
+      reconnectionDelay: 1000, 
+    });
     setSocket(newSocket);
 
     newSocket.on("connect", () => {
@@ -104,28 +143,32 @@ function RoomPage() {
     });
 
     newSocket.on("sync_video_change", (videoId) => {
-      console.log("Syncing video change:", videoId);
-      setSelectedVideo(videoId);
+      console.log("Syncing video change:", videoId.videoId);
+      setSelectedVideo(videoId.videoId);
     });
 
     newSocket.on("sync_video", ({ action, time, progress }) => {
-      if (player) {
-        if (action === "play") {
-          player.seekTo(time);
-          player.playVideo();
-          setIsPlaying(true);
-        } else if (action === "pause") {
-          player.seekTo(time);
-          player.pauseVideo();
-          setIsPlaying(false);
-        } else if (action === "seek") {
-          player.seekTo(time);
-          if (progress !== undefined) {
-            setProgress(progress);
-          }
+      if (!player || !isPlayerReady) {
+        console.warn("Player not ready or unavailable");
+        return;
+      }
+    
+      if (action === "play") {
+        player.playVideo();
+        player.seekTo(time);
+        setIsPlaying(true);
+      } else if (action === "pause") {
+        player.seekTo(time);
+        player.pauseVideo();
+        setIsPlaying(false);
+      } else if (action === "seek") {
+        player.seekTo(time);
+        if (progress !== undefined) {
+          setProgress(progress);
         }
       }
     });
+    
 
     // Listen for user join and leave events
     newSocket.on("user_joined", ({ username, time }) => {
@@ -148,20 +191,28 @@ function RoomPage() {
       ]);
     });
 
-    return () => {newSocket.disconnect();
+    return () => {
+      newSocket.disconnect();
+      newSocket.off();
     newSocket.emit("leave_room", { roomId, username });}
-  }, [roomId, username, navigate, leader]);
+  }, [roomId, username, navigate, leader, player, isPlayerReady]);
 
   const handleVideoSelect = (videoId) => {
-    
-    if (username === leader && isSyncEnabled) {
-      socket.emit("video_changed", { roomId, videoId });
+    console.log("Selected video:", videoId); // Ensure this is a string
+    if (selectedVideo !== videoId) {
+      if (username === leader && isSyncEnabled) {
+        socket.emit("video_changed", { roomId, videoId });
+        console.log("the user in room has selected video:", roomId, videoId);
+      }
+      setSelectedVideo(videoId);
     }
-    setSelectedVideo(videoId); 
   };
+  
+  
 
   const throttleSync = throttle((action, time, progress) => {
     if (socket?.connected) {
+      console.log("Throttling sync:", { action, time, progress });
       socket.emit("sync_video", {
         roomId,
         action,
@@ -171,38 +222,26 @@ function RoomPage() {
     }
   }, 1000);
   
-  useEffect(() => {
-    if (window.YT) {
-      try {
-        const newPlayer = new window.YT.Player("youtube-player", {
-          videoId: selectedVideo,
-          playerVars: {
-            controls: 0,
-            modestbranding: 1,
-            fs: 1,
-          },
-          events: {
-            onReady: onPlayerReady,
-            onStateChange: onPlayerStateChange,
-          },
-        });
-        setPlayer(newPlayer);
-        return () => {
-          if (newPlayer) {
-            newPlayer.destroy();
-          }
-        };
-      }catch(error) {
-        console.error("Error creating YouTube player", error);
-      }
-    }
-  }, [selectedVideo]);
+
+
+  // useEffect(() => {
+  //   return () => {
+  //     if (player) {
+  //       console.log("Destroying player instance in cleanup");
+  //       player.destroy();
+  //     }
+  //   };
+  // }, [player]);
+  
+  
 
   const onPlayerReady = (event) => {
     console.log("Player ready");
+    setIsPlayerReady(true);
     if (isPlaying) {
       event.target.playVideo();
     }
+    updateProgress();
   };
 
   const onPlayerStateChange = (event) => {
@@ -225,13 +264,14 @@ function RoomPage() {
   };
 
   const updateProgress = () => {
-    if (player) {
-      const duration = player.getDuration();
+    if (player && typeof player.getDuration === 'function') {
+      const duration = player.getDuration() || 1;
       const currentTime = player.getCurrentTime();
       const progress = (currentTime / duration) * 100;
       setProgress(progress);
     }
   };
+  
 
   useEffect(() => {
     if (isPlaying) {
@@ -244,30 +284,49 @@ function RoomPage() {
   }, [isPlaying, player]);
 
   const handlePlayPause = () => {
-    if (player) {
-      if (isPlaying) {
-        player.pauseVideo();
-        setIsPlaying(false);
-        if (username === leader && isSyncEnabled) {
-          socket.emit("sync_video", {
-            roomId,
-            action: "pause",
-            time: player.getCurrentTime(),
-          });
+    try {
+      if (player && typeof player.playVideo === "function") {
+        if (isPlaying) {
+          player.pauseVideo();
+          setIsPlaying(false);
+  
+          // Sync pause state with others if leader
+          if (username === leader && isSyncEnabled) {
+            try {
+              socket.emit("sync_video", {
+                roomId,
+                action: "pause",
+                time: player.getCurrentTime(),
+              });
+            } catch (error) {
+              console.error("Error syncing pause state:", error);
+            }
+          }
+        } else {
+          player.playVideo();
+          setIsPlaying(true);
+  
+          // Sync play state with others if leader
+          if (username === leader && isSyncEnabled) {
+            try {
+              socket.emit("sync_video", {
+                roomId,
+                action: "play",
+                time: player.getCurrentTime(),
+              });
+            } catch (error) {
+              console.error("Error syncing play state:", error);
+            }
+          }
         }
       } else {
-        player.playVideo();
-        setIsPlaying(true);
-        if (username === leader && isSyncEnabled) {
-          socket.emit("sync_video", {
-            roomId,
-            action: "play",
-            time: player.getCurrentTime(),
-          });
-        }
+        console.error("Player is not initialized correctly or missing required methods.");
       }
+    } catch (error) {
+      console.error("An unexpected error occurred in handlePlayPause:", error);
     }
   };
+  
 
   const handleSeek = (event) => {
     if (player && progressBarRef.current) {
@@ -275,7 +334,7 @@ function RoomPage() {
       const clickPosition = event.nativeEvent.offsetX;
       const clickProgress = (clickPosition / progressBarWidth) * 100;
       const duration = player.getDuration();
-      const newTime = (clickProgress / 100) * duration || 0; 
+      const newTime = (clickProgress / 100) * duration || 1; 
 
       player.seekTo(newTime);
       setProgress(clickProgress || 0); 
@@ -338,7 +397,6 @@ function RoomPage() {
         copyRoomUrl={copyRoomUrl}
         shareViaGmail={shareViaGmail}
         shareViaWhatsApp={shareViaWhatsApp}
-        // showAnalytics={handleShowAnalytics}
       /> 
        <Modal isOpen={showAnalytics} onClose={handleShowAnalytics}>
         <Analytics chatMessages={chatMessages} usersInRoom={usersInRoom} userActivity={userActivity} />

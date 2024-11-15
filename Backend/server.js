@@ -35,7 +35,7 @@ const io = socketIo(server, {
 
 const usersInRooms = {};
 const roomLeaders = {};
-const disconnectTimers = {}; 
+const disconnectTimers = {}; // To track disconnect timers
 
 io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);
@@ -169,10 +169,19 @@ io.on('connection', (socket) => {
     socket.to(roomId).emit('sync_video', { action, time });
   });
 
-  socket.on("video_changed", ({ roomId, VideoId }) => {
-    console.log(`Received 'video_changed' for room ${roomId}: VideoId ${VideoId}`);
-    io.to(roomId).emit("sync_video_change", { VideoId });
+  socket.on('video_changed', ({ roomId, videoId }) => {
+    console.log(`Received 'video_changed' for room ${roomId}: VideoId ${videoId}`);
+    try{
+      if (videoId) {
+        io.to(roomId).emit("sync_video_change", { videoId});
+      } else {
+        console.error("Video ID is undefined or invalid.");
+      }
+    }catch(err){
+      console.log(err);
+    }
   });
+  
 
   // Handle user disconnect
   socket.on('disconnect', async () => {
@@ -205,7 +214,12 @@ io.on('connection', (socket) => {
 
           // Handle leader change if the disconnected user was the leader
           if (disconnectedUser.username === roomLeaders[roomId]) {
-            roomLeaders[roomId] = usersInRooms[roomId][0]?.username || null;
+            // roomLeaders[roomId] = usersInRooms[roomId][0]?.username || null;
+            if (usersInRooms[roomId] && usersInRooms[roomId].length > 0) {
+              roomLeaders[roomId] = usersInRooms[roomId][0].username;
+            } else {
+              roomLeaders[roomId] = null;
+            }
             io.to(roomId).emit('leader_changed', roomLeaders[roomId]);
             console.log(`Leader changed for room ${roomId}, new leader: ${roomLeaders[roomId]}`);
           }

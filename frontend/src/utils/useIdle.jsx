@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-const useIdle = (timeout = 30000) => {
+const useIdle = (timeout = 50000) => {
   const [isIdle, setIsIdle] = useState(false);
 
   useEffect(() => {
