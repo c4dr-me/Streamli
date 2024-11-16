@@ -7,16 +7,14 @@ import ActiveUsers from "../components/ActiveUsers";
 import io from "socket.io-client";
 import axios from "axios";
 import "../components/scrollBar.css";
-import {
-  FaPlay,
-  FaPause,
-  FaSync,
-  FaChartBar,
-} from "react-icons/fa";
+import { FaPlay, FaPause, FaSync, FaChartBar, FaSmile } from "react-icons/fa";
 import Analytics from "../components/Analytics ";
-import {throttle} from 'lodash';
-import Header from '../components/Header';
-import Modal from '../components/Modal';
+import { throttle } from "lodash";
+import Header from "../components/Header";
+import Modal from "../components/Modal";
+import { ReactionBarSelector } from "@charkour/react-reactions";
+import { motion } from "framer-motion";
+import Confetti from "react-confetti";
 
 function RoomPage() {
   const { roomId } = useParams();
@@ -40,11 +38,14 @@ function RoomPage() {
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [userActivity, setUserActivity] = useState([]); // State to track user activity (join/leave)
   const [isPlayerReady, setIsPlayerReady] = useState(false);
+  const [flyingEmojis, setFlyingEmojis] = useState([]);
+  const [showReactionBar, setShowReactionBar] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
 
   useEffect(() => {
     if (window.YT && selectedVideo) {
       let newPlayer;
-  
+
       try {
         newPlayer = new window.YT.Player("youtube-player", {
           videoId: selectedVideo,
@@ -60,12 +61,12 @@ function RoomPage() {
             onStateChange: onPlayerStateChange,
           },
         });
-  
+
         setPlayer(newPlayer);
       } catch (error) {
         console.error("Error creating YouTube player", error);
       }
-  
+
       return () => {
         if (newPlayer) {
           console.log("Destroying player instance");
@@ -75,7 +76,7 @@ function RoomPage() {
       };
     }
   }, [selectedVideo]);
-  
+
   useEffect(() => {
     if (!username) {
       navigate("/", { state: { roomId } });
@@ -108,9 +109,9 @@ function RoomPage() {
     fetchMessages();
 
     const newSocket = io("http://localhost:5000", {
-      reconnection: true, 
-      reconnectionAttempts: 5, 
-      reconnectionDelay: 1000, 
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
     });
     setSocket(newSocket);
 
@@ -123,7 +124,7 @@ function RoomPage() {
       console.log("Received user list:", userList);
       setUsersInRoom(userList);
       if (!leader && userList.length > 0) {
-        setLeader(userList[0].username); 
+        setLeader(userList[0].username);
       }
     });
 
@@ -152,7 +153,7 @@ function RoomPage() {
         console.warn("Player not ready or unavailable");
         return;
       }
-    
+
       if (action === "play") {
         player.playVideo();
         player.seekTo(time);
@@ -168,17 +169,25 @@ function RoomPage() {
         }
       }
     });
-    
 
     // Listen for user join and leave events
     newSocket.on("user_joined", ({ username, time }) => {
       setChatMessages((prevMessages) => {
         // Check if the join message already exists
         const joinMessageExists = prevMessages.some(
-          (msg) => msg.username === "System" && msg.message === `${username} joined the room`
+          (msg) =>
+            msg.username === "System" &&
+            msg.message === `${username} joined the room`
         );
         if (!joinMessageExists) {
-          return [...prevMessages, { username: "System", message: `${username} joined the room`, time }];
+          return [
+            ...prevMessages,
+            {
+              username: "System",
+              message: `${username} joined the room`,
+              time,
+            },
+          ];
         }
         return prevMessages;
       });
@@ -191,10 +200,22 @@ function RoomPage() {
       ]);
     });
 
+    newSocket.on("emoji_reaction", (emojis) => {
+      console.log("Received emoji reactions:", emojis); // Log received emoji reactions
+      setFlyingEmojis((prev) => [...prev, ...emojis]);
+      if (emojis.some((emoji) => emoji.key === "celebrate")) {
+        setShowConfetti(true);
+        setTimeout(() => setShowConfetti(false), 3000); // Hide confetti after 3 seconds
+      }
+    });
+    
+    
+
     return () => {
       newSocket.disconnect();
       newSocket.off();
-    newSocket.emit("leave_room", { roomId, username });}
+      newSocket.emit("leave_room", { roomId, username });
+    };
   }, [roomId, username, navigate, leader, player, isPlayerReady]);
 
   const handleVideoSelect = (videoId) => {
@@ -207,8 +228,6 @@ function RoomPage() {
       setSelectedVideo(videoId);
     }
   };
-  
-  
 
   const throttleSync = throttle((action, time, progress) => {
     if (socket?.connected) {
@@ -221,19 +240,7 @@ function RoomPage() {
       });
     }
   }, 1000);
-  
 
-
-  // useEffect(() => {
-  //   return () => {
-  //     if (player) {
-  //       console.log("Destroying player instance in cleanup");
-  //       player.destroy();
-  //     }
-  //   };
-  // }, [player]);
-  
-  
 
   const onPlayerReady = (event) => {
     console.log("Player ready");
@@ -264,14 +271,13 @@ function RoomPage() {
   };
 
   const updateProgress = () => {
-    if (player && typeof player.getDuration === 'function') {
+    if (player && typeof player.getDuration === "function") {
       const duration = player.getDuration() || 1;
       const currentTime = player.getCurrentTime();
       const progress = (currentTime / duration) * 100;
       setProgress(progress);
     }
   };
-  
 
   useEffect(() => {
     if (isPlaying) {
@@ -289,7 +295,7 @@ function RoomPage() {
         if (isPlaying) {
           player.pauseVideo();
           setIsPlaying(false);
-  
+
           // Sync pause state with others if leader
           if (username === leader && isSyncEnabled) {
             try {
@@ -305,7 +311,7 @@ function RoomPage() {
         } else {
           player.playVideo();
           setIsPlaying(true);
-  
+
           // Sync play state with others if leader
           if (username === leader && isSyncEnabled) {
             try {
@@ -320,24 +326,25 @@ function RoomPage() {
           }
         }
       } else {
-        console.error("Player is not initialized correctly or missing required methods.");
+        console.error(
+          "Player is not initialized correctly or missing required methods."
+        );
       }
     } catch (error) {
       console.error("An unexpected error occurred in handlePlayPause:", error);
     }
   };
-  
 
   const handleSeek = (event) => {
     if (player && progressBarRef.current) {
-      const progressBarWidth = progressBarRef.current?.offsetWidth ?? 1; 
+      const progressBarWidth = progressBarRef.current?.offsetWidth ?? 1;
       const clickPosition = event.nativeEvent.offsetX;
       const clickProgress = (clickPosition / progressBarWidth) * 100;
       const duration = player.getDuration();
-      const newTime = (clickProgress / 100) * duration || 1; 
+      const newTime = (clickProgress / 100) * duration || 1;
 
       player.seekTo(newTime);
-      setProgress(clickProgress || 0); 
+      setProgress(clickProgress || 0);
       if (username === leader && isSyncEnabled) {
         throttleSync("seek", newTime, clickProgress);
       }
@@ -389,6 +396,60 @@ function RoomPage() {
     setShowAnalytics(!showAnalytics);
   };
 
+  const reactions = [
+    { label: "Love", node: <div>❤️</div>, key: "love" },
+    { label: "Haha", node: <div>😂</div>, key: "haha" },
+    { label: "Wow", node: <div>😮</div>, key: "wow" },
+    { label: "Sad", node: <div>😢</div>, key: "sad" },
+    { label: "Celebrate", node: <div>🎉</div>, key: "celebrate" },
+  ];
+  const handleSelect = (key) => {
+    const reaction = reactions.find((r) => r.key === key);
+    if (reaction) {
+      const emoji = reaction.node.props.children;
+      const instances = 5; // Number of instances to simulate spam effect
+      const newEmojis = Array.from({ length: instances }, (_, index) => ({
+        emoji,
+        id: Date.now() + Math.random(), // Ensure unique ID
+        left: 13 + Math.random() * 5, // Slight variation in left position
+        bottom: 8 + Math.random() * 5, // Slight variation in bottom position
+        key,
+      }));
+      setFlyingEmojis((prev) => [...prev, ...newEmojis]);
+      socket.emit("emoji_reaction", { roomId, emojis: newEmojis });
+      console.log("Emitted emoji reaction:", newEmojis);
+      if (key === "celebrate") {
+        setShowConfetti(true);
+        setTimeout(() => setShowConfetti(false), 3000); // Hide confetti after 3 seconds
+      }
+    }
+  };
+
+  const handleAnimationEnd = (id) => {
+    setFlyingEmojis((prev) => prev.filter((e) => e.id !== id));
+  };
+
+  const emojiVariants = {
+    initial: {
+      scale: 0.5,
+      opacity: 0,
+      y: 0,
+    }, // Starting state
+    animate: {
+      scale: [1, 2.5, 2], // Scale up and down
+      y: [0, -50, -100, -150, -200], // Move upward smoothly
+      x: [0, -20, 20, -10, 10], // Randomize horizontal movement
+      rotate: [0, 15, -15, 10, -10], // Slight rotations
+      opacity: [0, 1, 0.8, 0.6, 0.4, 0],
+      transition: {
+        duration: 2, // Make the animation last longer
+        ease: "easeIn", // Smooth easing
+        repeat: 0, // No repeat
+        stiffness: 80, // Add spring effect
+      },
+    },
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-900 text-white pt-1 pb-8">
       <Header
@@ -397,139 +458,184 @@ function RoomPage() {
         copyRoomUrl={copyRoomUrl}
         shareViaGmail={shareViaGmail}
         shareViaWhatsApp={shareViaWhatsApp}
-      /> 
-       <Modal isOpen={showAnalytics} onClose={handleShowAnalytics}>
-        <Analytics chatMessages={chatMessages} usersInRoom={usersInRoom} userActivity={userActivity} />
+      />
+      <Modal isOpen={showAnalytics} onClose={handleShowAnalytics}>
+        <Analytics
+          chatMessages={chatMessages}
+          usersInRoom={usersInRoom}
+          userActivity={userActivity}
+        />
       </Modal>
-      
-        <div className="flex flex-col md:flex-row w-full max-w-screen-xl mx-auto space-y-4 md:space-y-0 md:space-x-8">
-          {/* Left Section: Video Player */}
-          <div className="w-full md:w-7/8 bg-gray-800 rounded-lg p-4 flex flex-col space-y-6">
-            <YouTubeSearch
-              youtubeSearch={youtubeSearch}
-              setYoutubeSearch={setYoutubeSearch}
-              onVideoSelect={handleVideoSelect}
-            />
-            <div className="bg-gray-700 rounded-lg mt-2 flex-1 flex flex-col space-y-4 min-h-[30vh]">
-              <div
-                id="youtube-player"
-                className="w-full h-[400px] md:h-[490px] rounded-lg"
-              ></div>
 
-              <div className="flex items-center justify-between mt-2 px-2 pb-2">
-                <button
-                  onClick={handlePlayPause}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === "") {
-                      handlePlayPause();
-                      event.preventDefault();
-                    }
-                  }}
-                  tabIndex="1"
-                  className="flex m-auto items-center pl-4 justify-center p-0 bg-transparent border-none hover:bg-transparent transition duration-300"
-                  aria-label={isPlaying ? "Pause video" : "Play video"}
+      <div className="flex flex-col md:flex-row w-full max-w-screen-xl mx-auto space-y-4 md:space-y-0 md:space-x-8">
+        {/* Left Section: Video Player */}
+        <div className="w-full md:w-7/8 bg-gray-800 rounded-lg p-4 flex flex-col space-y-6">
+          <YouTubeSearch
+            youtubeSearch={youtubeSearch}
+            setYoutubeSearch={setYoutubeSearch}
+            onVideoSelect={handleVideoSelect}
+          />
+          <div className="bg-gray-700 rounded-lg mt-2 flex-1 flex flex-col space-y-4 min-h-[30vh]">
+            <div
+              id="youtube-player"
+              className="w-full h-[400px] md:h-[490px] rounded-lg"
+            ></div>
+            {flyingEmojis.map((emoji) => (
+              <motion.div
+                key={emoji.id}
+                className="absolute"
+                style={{
+                  bottom: `${emoji.bottom}%`, // Dynamic bottom position
+                  left: `${emoji.left}%`,
+                  transform: "translate(-50%, -50%)",
+                  zIndex: 10,
+                }}
+                variants={emoji.key === "celebrate" ? {} : emojiVariants} 
+                initial="initial"
+                animate="animate"
+                onAnimationComplete={() => handleAnimationEnd(emoji.id)}
+              >
+                {emoji.emoji}
+              </motion.div>
+            ))}
+
+            {showConfetti && <Confetti />}
+            <div className="flex relative items-center justify-between mt-2 px-2 pb-2">
+              <button
+                onClick={handlePlayPause}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === "") {
+                    handlePlayPause();
+                    event.preventDefault();
+                  }
+                }}
+                tabIndex="1"
+                className="flex m-auto items-center pl-4 justify-center p-0 bg-transparent border-none hover:bg-transparent transition duration-300"
+                aria-label={isPlaying ? "Pause video" : "Play video"}
+              >
+                {isPlaying ? (
+                  <FaPause
+                    size={26}
+                    className="text-blue-600 hover:text-blue-700"
+                  />
+                ) : (
+                  <FaPlay
+                    size={26}
+                    className="text-blue-600 hover:text-blue-700"
+                  />
+                )}
+              </button>
+
+              <div className="flex-1 mx-4">
+                <div
+                  ref={progressBarRef}
+                  className="progressbar-container"
+                  onClick={handleSeek}
                 >
-                  {isPlaying ? (
-                    <FaPause
-                      size={26}
-                      className="text-blue-600 hover:text-blue-700"
-                    />
-                  ) : (
-                    <FaPlay
-                      size={26}
-                      className="text-blue-600 hover:text-blue-700"
-                    />
-                  )}
-                </button>
-
-                <div className="flex-1 mx-4">
                   <div
-                    ref={progressBarRef}
-                    className="progressbar-container"
-                    onClick={handleSeek}
+                    className="progressbar-complete"
+                    style={{ width: `${progress}%` }}
                   >
-                    <div
-                      className="progressbar-complete"
-                      style={{ width: `${progress}%` }}
-                    >
-                      <div className="progressbar-liquid"></div>
-                    </div>
-                    <span className="progress">{Math.round(progress)}%</span>
+                    <div className="progressbar-liquid"></div>
                   </div>
+                  <span className="progress">{Math.round(progress)}%</span>
                 </div>
+              </div>
 
-                {username === leader && (
-                  <button
-                    onClick={() => setIsSyncEnabled(!isSyncEnabled)}
-                    className={`ml-2 p-3 rounded-full transition-all duration-300 transform hover:scale-110 hover:rotate-12 shadow-md ${isSyncEnabled
-                        ? "bg-gradient-to-br from-green-500 to-blue-600 text-white hover:shadow-lg"
-                        : "bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white shadow-sm"
-                      }`}
-                    title={isSyncEnabled ? "Disable Sync" : "Enable Sync"}
-                  >
-                    <FaSync
-                      size={18}
-                      className={`text-white transition-transform duration-500 ${isSyncEnabled ? "rotate-180 animate-shake" : "rotate-0 animate-shake"}`}
-                    />
-                  </button>
-                )}
+              {username === leader && (
+                <button
+                  onClick={() => setIsSyncEnabled(!isSyncEnabled)}
+                  className={`ml-2 p-3 rounded-full transition-all duration-300 transform hover:scale-110 hover:rotate-12 shadow-md ${
+                    isSyncEnabled
+                      ? "bg-gradient-to-br from-green-500 to-blue-600 text-white hover:shadow-lg"
+                      : "bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white shadow-sm"
+                  }`}
+                  title={isSyncEnabled ? "Disable Sync" : "Enable Sync"}
+                >
+                  <FaSync
+                    size={18}
+                    className={`text-white transition-transform duration-500 ${
+                      isSyncEnabled
+                        ? "rotate-180 animate-shake"
+                        : "rotate-0 animate-shake"
+                    }`}
+                  />
+                </button>
+              )}
+              <div className="absolute right-[-8px] top-11 bg-gray-800 p-2 rounded-full shadow-lg">
+                <button onClick={() => setShowReactionBar(!showReactionBar)}>
+                  <FaSmile size={14} className="text-white" />
+                </button>
               </div>
-            </div>
-          </div>
-      
-          {/* Right Section: Active Users & Chat */}
-          <div className="w-full md:w-2/5 flex flex-col space-y-8">
-            {/* Chat Area */}
-            <div className="flex-1 bg-gray-800 rounded-lg p-4 flex flex-col shadow-lg ">
-              <div className="flex-1 overflow-y-auto mb-4 space-y-4 max-w-full ">
-                <ChatMessages
-                  chatMessages={chatMessages}
-                  setReplyTo={setReplyTo}
-                />
-                {typingUser && (
-                  <p className="text-gray-400 pt-10">{typingUser} is typing...</p>
-                )}
-              </div>
-              {replyTo && (
-                <div className="bg-gray-700 p-2 rounded-lg mb-2">
-                  <p className="text-gray-400">Replying to: {replyTo.message}</p>
-                  <button
-                    onClick={() => setReplyTo(null)}
-                    className="text-red-500"
-                  >
-                    Cancel
-                  </button>
+
+              {showReactionBar && (
+                <div className="absolute right-0 bottom-0 bg-gray-800 p-4 rounded-lg shadow-lg">
+                  <ReactionBarSelector
+                    reactions={reactions}
+                    onSelect={handleSelect}
+                    iconSize={16}
+                    style={{
+                      backgroundColor: "#1f2937",
+                      borderRadius: "8px",
+                      padding: "2px",
+                    }}
+                  />
                 </div>
               )}
-              <MessageInput
-                newMessage={newMessage}
-                setNewMessage={setNewMessage}
-                handleSendMessage={handleSendMessage}
-                handleTyping={handleTyping}
-              />
-            </div>
-            {/* Active Users Section */}
-            <div className="h-40 bg-gray-800 rounded-lg p-4 overflow-y-auto shadow-lg">
-              <h3 className="text-xl font-semibold mb-4">Active Users</h3>
-              <ActiveUsers
-                users={usersInRoom}
-                currentUsername={username}
-                leader={leader}
-              />
             </div>
           </div>
-            
+        </div>
+
+        {/* Right Section: Active Users & Chat */}
+        <div className="w-full md:w-2/5 flex flex-col space-y-8">
+          {/* Chat Area */}
+          <div className="flex-1 bg-gray-800 rounded-lg p-4 flex flex-col shadow-lg ">
+            <div className="flex-1 overflow-y-auto mb-4 space-y-4 max-w-full ">
+              <ChatMessages
+                chatMessages={chatMessages}
+                setReplyTo={setReplyTo}
+              />
+              {typingUser && (
+                <p className="text-gray-400 pt-10">{typingUser} is typing...</p>
+              )}
+            </div>
+            {replyTo && (
+              <div className="bg-gray-700 p-2 rounded-lg mb-2">
+                <p className="text-gray-400">Replying to: {replyTo.message}</p>
+                <button
+                  onClick={() => setReplyTo(null)}
+                  className="text-red-500"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+            <MessageInput
+              newMessage={newMessage}
+              setNewMessage={setNewMessage}
+              handleSendMessage={handleSendMessage}
+              handleTyping={handleTyping}
+            />
+          </div>
+          {/* Active Users Section */}
+          <div className="h-40 bg-gray-800 rounded-lg p-4 overflow-y-auto shadow-lg">
+            <h3 className="text-xl font-semibold mb-4">Active Users</h3>
+            <ActiveUsers
+              users={usersInRoom}
+              currentUsername={username}
+              leader={leader}
+            />
+          </div>
+        </div>
       </div>
-           <button
+      <button
         onClick={handleShowAnalytics}
         className="fixed bottom-8 right-8 p-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full shadow-lg hover:from-blue-600 hover:to-purple-700 transition duration-300"
         title="Show Analytics"
       >
         <div className="absolute top-0 left-10 w-full h-full bg-gradient-to-r from-transparent via-gray-300 to-transparent rounded-full animate-shine"></div>
         <FaChartBar size={24} />
-        
       </button>
-      
     </div>
   );
 }

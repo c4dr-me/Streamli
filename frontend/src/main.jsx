@@ -13,6 +13,10 @@ if ('serviceWorker' in navigator) {
       });
   });
 }
+window.addEventListener('online', () => {
+  console.log('Network available. Refreshing the page.');
+  window.location.reload();
+});
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

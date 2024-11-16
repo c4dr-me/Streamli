@@ -181,6 +181,16 @@ io.on('connection', (socket) => {
       console.log(err);
     }
   });
+
+  socket.on("emoji_reaction", (emojiData) => {
+    try {
+      const { roomId, emojis } = emojiData;
+    console.log(`Received 'emoji_reaction' for room ${roomId}:  ${JSON.stringify(emojis)}`);
+    io.to(roomId).emit("emoji_reaction", emojis);
+    }catch(err){
+      console.log(err);
+    }
+  });
   
 
   // Handle user disconnect
