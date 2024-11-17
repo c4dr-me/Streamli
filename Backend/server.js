@@ -6,6 +6,7 @@ const connectDB = require('./config/db');
 const Message = require('./models/Message');
 const Room = require('./models/Room');
 const UserEvent = require("./models/UserEvent");
+const axios = require("axios");
 
 const app = express();
 const server = http.createServer(app);
@@ -136,32 +137,48 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Handle sending messages
-  socket.on('send_message', async (messageData) => {
-    const { username, message, time, roomId } = messageData;
-    console.log('Received message:', messageData);
+// Handle sending messages
+socket.on('send_message', async (messageData) => {
+  const { username, message, time, roomId } = messageData;
+  console.log('Received message:', messageData);
 
-    try {
-      const room = await Room.findOne({ roomId });
-      if (!room) {
-        console.error('Room not found:', roomId);
-        return;
-      }
+  try {
+    
+    const response = await axios.post('http://localhost:5001/predict', { comment: message });
+    const { toxic } = response.data;
 
-      const newMessage = new Message({
-        username,
-        message,
-        time,
-        roomId: room._id,
-      });
-      await newMessage.save();
+    // toxicity flag 4 message data
+    const messageWithToxicFlag = { ...messageData, isToxic: toxic };
 
-      io.to(roomId).emit('receive_message', messageData);
-      console.log(`Emitted message to room ${roomId}`);
-    } catch (error) {
-      console.error('Error saving message:', error);
+    if (toxic) {
+      io.to(socket.id).emit('receive_message', messageWithToxicFlag);
+      console.log('Message blocked due to toxicity');
+      return;  
+    } else {
+      io.to(roomId).emit('receive_message', messageWithToxicFlag);
     }
-  });
+
+    // Save the clean message to the database
+    const room = await Room.findOne({ roomId });
+    if (!room) {
+      console.error('Room not found:', roomId);
+      return;
+    }
+
+    const newMessage = new Message({
+      username,
+      message,  // Store the original message
+      time,
+      roomId: room._id,
+    });
+    await newMessage.save();
+
+    console.log(`Emitted message to room ${roomId}`);
+  } catch (error) {
+    console.error('Error saving message:', error);
+  }
+});
+
 
   // Handle video sync actions
   socket.on('sync_video', ({ roomId, action, time }) => {
@@ -187,7 +204,7 @@ io.on('connection', (socket) => {
       const { roomId, emojis } = emojiData;
     console.log(`Received 'emoji_reaction' for room ${roomId}:  ${JSON.stringify(emojis)}`);
     io.to(roomId).emit("emoji_reaction", emojis);
-    }catch(err){
+    }catch(err){ac
       console.log(err);
     }
   });

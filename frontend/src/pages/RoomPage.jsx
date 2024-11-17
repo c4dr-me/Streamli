@@ -139,6 +139,7 @@ function RoomPage() {
       }
     });
 
+
     newSocket.on("leader_changed", (newLeader) => {
       setLeader(newLeader);
     });
@@ -208,6 +209,7 @@ function RoomPage() {
         setTimeout(() => setShowConfetti(false), 3000); // Hide confetti after 3 seconds
       }
     });
+    
     
     
 
