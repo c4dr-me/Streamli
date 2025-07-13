@@ -1,16 +1,12 @@
-# Streamli
-
-Streame is a real-time collaborative chat and video sync platform built with a modern stack:
-
 ---
 
 ## About
 
-**Streame** is a real-time collaborative platform for chat and video sync, designed for seamless group experiences. It features a Progressive Web App (PWA) for installable, offline-capable usage, and a robust leader-follower model for synchronized video playback.
+**Streamli** is a real-time collaborative platform for chat and video sync, designed for seamless group experiences. It features a Progressive Web App (PWA) for installable, offline-capable usage, and a robust leader-follower model for synchronized video playback.
 
-# Streame
+# Streamli
 
-Streame is a real-time collaborative chat and video sync platform built with a modern stack:
+Streamli is a real-time collaborative chat and video sync platform built with a modern stack:
 
 - **Frontend:** React + Vite + Tailwind CSS
 - **Backend:** Node.js (Express, Socket.io, MongoDB)
