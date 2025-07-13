@@ -1,5 +1,3 @@
----
-
 ## About
 
 **Streamli** is a real-time collaborative platform for chat and video sync, designed for seamless group experiences. It features a Progressive Web App (PWA) for installable, offline-capable usage, and a robust leader-follower model for synchronized video playback.
