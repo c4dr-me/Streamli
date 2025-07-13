@@ -152,4 +152,3 @@ MIT
 
 ---
 
-> **Note:** Replace the screenshot paths with your actual screenshot files in the `screenshots/` directory.
