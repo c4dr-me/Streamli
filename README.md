@@ -1,4 +1,4 @@
-# Streame
+# Streamli
 
 Streame is a real-time collaborative chat and video sync platform built with a modern stack:
 
