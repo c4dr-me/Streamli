@@ -105,9 +105,16 @@ const Analytics = ({ chatMessages = [], usersInRoom = [], userActivity = [] }) =
     console.log("Filtered user messages:", userMessages);
     const userMessageCounts = userMessages.reduce((acc, msg) => {
       console.log("Raw timestamp:", msg.time);
-      
-      const timestamp = new Date(`2024-11-11T${msg.time}+05:30`).toISOString();
-
+      if (!msg.time) {
+        console.warn("Skipping message with invalid time:", msg);
+        return acc;
+      }
+      const dateObj = new Date(`2024-11-11T${msg.time}+05:30`);
+      if (isNaN(dateObj.getTime())) {
+        console.warn("Skipping message with unparsable time:", msg);
+        return acc;
+      }
+      const timestamp = dateObj.toISOString();
       console.log("Parsed timestamp:", timestamp);
       if (!acc[msg.username]) acc[msg.username] = [];
       acc[msg.username].push({ x: timestamp, y: 1 });

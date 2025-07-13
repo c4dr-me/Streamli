@@ -70,8 +70,10 @@ function ChatMessages({ chatMessages, setReplyTo }) {
                 {!msg.isToxic && msg.username !== "System" && (
                   <button
                     onClick={() => setReplyTo(msg)}
-                    className="text-blue-500 hover:underline mt-2 absolute right-2 top-1"
+                    className="text-blue-500 hover:underline mt-2 ml-2 flex items-center gap-1"
+                    title="Reply to this message"
                   >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h7V6a1 1 0 011-1h7a1 1 0 011 1v12a1 1 0 01-1 1h-7a1 1 0 01-1-1v-4H3v-4z" /></svg>
                     Reply
                   </button>
                 )}

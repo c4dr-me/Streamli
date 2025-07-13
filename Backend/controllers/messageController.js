@@ -1,7 +1,6 @@
-// controllers/messageController.js
 const Message = require('../models/Message');
 
-// Fetch all messages from the database
+
 exports.getMessages = async (req, res) => {
   try {
     const messages = await Message.find();
@@ -11,7 +10,6 @@ exports.getMessages = async (req, res) => {
   }
 };
 
-// Save a new message to the database
 exports.createMessage = async (data) => {
   try {
     const newMessage = new Message(data);

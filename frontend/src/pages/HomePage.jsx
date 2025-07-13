@@ -80,7 +80,7 @@ function HomePage() {
   return (
     <div className="flex flex-col items-center justify-center bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 min-h-screen py-12 px-6">
       <h1 className="text-4xl font-extrabold text-white mb-8 animate__animated animate__fadeIn">
-        Welcome to the Room App
+        Welcome to Streamli
       </h1>
 
       {stage === 1 && (

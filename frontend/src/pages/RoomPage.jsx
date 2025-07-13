@@ -365,7 +365,7 @@ function RoomPage() {
 
       socket.emit("send_message", message);
       setNewMessage("");
-      setReplyTo(null); // Clear the reply state after sending the message
+      setReplyTo(null); 
     }
   };
 
