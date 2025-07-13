@@ -39,12 +39,11 @@ Streame is a real-time collaborative chat and video sync platform built with a m
 ## Screenshots
 
 ### Chat Room with Toxicity Detection
-
 ![Chat Room Screenshot](./img/chatroom.png)
 
 ### Video Sync Feature
+https://github.com/user-attachments/assets/e3c3b4ac-9b10-4743-ba3a-375752946519
 
-![Video Sync](./img/sync.mp4)
 
 ### Toxic Message Indication
 
