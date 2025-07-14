@@ -50,7 +50,7 @@ https://github.com/user-attachments/assets/e3c3b4ac-9b10-4743-ba3a-375752946519
 ### 1. Clone the Repository
 
 ```sh
-git clone https://github.com/yourusername/streame.git
+git clone https://github.com/c4dr-me/Streamli/tree/analysis
 cd streame
 ```
 
